@@ -153,10 +153,28 @@ def _wx_string(metar: dict[str, Any]) -> str | None:
     return None
 
 
-@dataclass(frozen=True)
 class AeroWeatherSensorDescription(SensorEntityDescription):
-    value_fn: Callable[[dict[str, Any], str], Any]
-    attrs_fn: Callable[[dict[str, Any], str], dict[str, Any]] | None = None
+    """Sensor description with callbacks (not a dataclass)."""
+
+    def __init__(
+        self,
+        *,
+        key: str,
+        name: str,
+        icon: str | None = None,
+        native_unit_of_measurement: str | None = None,
+        value_fn,
+        attrs_fn=None,
+    ) -> None:
+        super().__init__(
+            key=key,
+            name=name,
+            icon=icon,
+            native_unit_of_measurement=native_unit_of_measurement,
+        )
+        self.value_fn = value_fn
+        self.attrs_fn = attrs_fn
+
 
 
 def _raw_metar(data: dict[str, Any], icao: str) -> str | None:
