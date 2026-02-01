@@ -1,0 +1,17 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "AeroWeather.gov",
+        "description": "Enter ICAO identifiers (comma-separated).",
+        "data": {
+          "icaos": "ICAOs",
+          "scan_interval": "Update interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "invalid_icao": "Invalid ICAO identifier."
+    }
+  }
+}
