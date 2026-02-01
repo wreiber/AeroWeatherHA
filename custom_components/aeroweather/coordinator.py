@@ -33,6 +33,7 @@ class AeroWeatherCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             logger=__import__("logging").getLogger(__name__),
             name=DOMAIN,
             update_interval=timedelta(seconds=scan),
+            update_method=self._async_update
         )
 
 async def _fetch(self, endpoint: str, ids: str):
