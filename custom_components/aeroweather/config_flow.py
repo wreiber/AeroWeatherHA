@@ -44,7 +44,12 @@ class AeroWeatherConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 ): vol.Coerce(int),
             }
         )
-        return self.async_show_form("user", schema, errors)
+        return self.async_show_form(
+    step_id="user",
+    data_schema=schema,
+    errors=errors
+)
+
 
     @staticmethod
     @callback
