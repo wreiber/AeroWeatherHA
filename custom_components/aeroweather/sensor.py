@@ -63,6 +63,36 @@ def _altimeter_to_inhg(val: Any) -> float | None:
     return round(f, 2)
 
 
+def _c_to_f(c: float) -> float:
+    return (c * 9.0 / 5.0) + 32.0
+
+
+def _pressure_altitude_ft(field_elev_ft: float, altimeter_inhg: float) -> float:
+    """
+    Pressure Altitude (ft) approximation:
+      PA ≈ field_elev + (29.92 - altimeter) * 1000
+    """
+    return field_elev_ft + (29.92 - altimeter_inhg) * 1000.0
+
+
+def _isa_temp_c_at_alt_ft(alt_ft: float) -> float:
+    """
+    ISA temp at altitude (°C):
+      ISA ≈ 15 - 2°C per 1000 ft
+    """
+    return 15.0 - 2.0 * (alt_ft / 1000.0)
+
+
+def _density_altitude_ft(field_elev_ft: float, altimeter_inhg: float, oat_c: float) -> float:
+    """
+    Density Altitude (ft) approximation:
+      DA ≈ PA + 120 * (OAT - ISA)
+    """
+    pa = _pressure_altitude_ft(field_elev_ft, altimeter_inhg)
+    isa = _isa_temp_c_at_alt_ft(pa)
+    return pa + 120.0 * (oat_c - isa)
+
+
 def _to_float(val: Any) -> float | None:
     try:
         if val is None:
@@ -404,3 +434,12 @@ class AeroWeatherSensor(CoordinatorEntity[AeroWeatherCoordinator], SensorEntity)
         if self._spec.attrs_fn is None:
             return {}
         return self._spec.attrs_fn(self.coordinator.data or {}, self._icao)
+
+CONF_ELEVATIONS = "elevations_ft"
+
+DEFAULT_ELEVATIONS_FT = {
+    "KCLT": 748,
+    "KINT": 969,
+    "KRUQ": 772,
+    "KEXX": 733,
+}
