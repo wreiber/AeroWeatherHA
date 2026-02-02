@@ -27,6 +27,42 @@ def _first_present(d: dict[str, Any], keys: list[str]) -> Any:
     return None
 
 
+ALTIM_HPA_PER_INHG = 33.8638866667
+
+def _altimeter_to_inhg(val: Any) -> float | None:
+    """Return altimeter setting in inHg from various possible inputs."""
+    if val is None:
+        return None
+
+    # Handle raw METAR tokens like "A3011" or "Q1013"
+    if isinstance(val, str):
+        s = val.strip().upper()
+        m = re.search(r"\bA(\d{4})\b", s)
+        if m:
+            return round(int(m.group(1)) / 100.0, 2)
+        m = re.search(r"\bQ(\d{4})\b", s)
+        if m:
+            return round(int(m.group(1)) / ALTIM_HPA_PER_INHG, 2)
+
+        # fall through: maybe it's a numeric string
+        try:
+            val = float(s)
+        except ValueError:
+            return None
+
+    # Numeric path
+    f = _to_float(val)
+    if f is None:
+        return None
+
+    # Heuristic:
+    # - If it's > 80, it's definitely NOT inHg (likely hPa)
+    # - If it's ~25-35, it's probably already inHg
+    if f > 80:
+        return round(f / ALTIM_HPA_PER_INHG, 2)
+    return round(f, 2)
+
+
 def _to_float(val: Any) -> float | None:
     try:
         if val is None:
