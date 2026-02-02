@@ -250,6 +250,50 @@ def _dewpoint_c(metar: dict[str, Any]) -> float | None:
 
 
 def _wx_string(metar: dict[str, Any]) -> str | None:
+    # --- Density altitude support ---
+
+# Field elevation in feet (MSL). Add your airports here.
+# If an airport isn't listed, Density Altitude will show "unknown".
+FIELD_ELEV_FT: dict[str, int] = {
+    "KCLT": 748,
+    "KINT": 969,
+    "KRUQ": 772,
+    "KEXX": 733,
+}
+
+def _pressure_altitude_ft(field_elev_ft: float, altimeter_inhg: float) -> float:
+    """Pressure altitude (ft) approximation."""
+    return field_elev_ft + (29.92 - altimeter_inhg) * 1000.0
+
+def _isa_temp_c_at_alt_ft(alt_ft: float) -> float:
+    """ISA temperature (°C) at altitude."""
+    return 15.0 - 2.0 * (alt_ft / 1000.0)
+
+def _density_altitude_ft(field_elev_ft: float, altimeter_inhg: float, oat_c: float) -> float:
+    """Density altitude (ft) approximation."""
+    pa = _pressure_altitude_ft(field_elev_ft, altimeter_inhg)
+    isa = _isa_temp_c_at_alt_ft(pa)
+    return pa + 120.0 * (oat_c - isa)
+
+def _density_altitude_station(data: dict[str, Any], icao: str) -> int | None:
+    """Compute density altitude for a station in feet (rounded)."""
+    metar = _metar_item(data, icao) or {}
+    if not metar:
+        return None
+
+    elev_ft = FIELD_ELEV_FT.get(icao)
+    if elev_ft is None:
+        return None
+
+    alt_inhg = _altim_inhg(metar)
+    temp_c = _temp_c(metar)
+
+    if alt_inhg is None or temp_c is None:
+        return None
+
+    da_ft = _density_altitude_ft(float(elev_ft), float(alt_inhg), float(temp_c))
+    return int(round(da_ft))
+
     wx = _first_present(metar, ["wxString", "presentWeather", "wx"])
     if isinstance(wx, str) and wx.strip():
         return wx.strip()
@@ -369,6 +413,15 @@ DESCRIPTIONS: list[AeroWeatherSensorSpec] = [
         value_fn=lambda d, i: (_temp_c(_metar_item(d, i) or {}) if _metar_item(d, i) else None),
     ),
     AeroWeatherSensorSpec(
+    description=SensorEntityDescription(
+        key="density_altitude",
+        name="Density Altitude",
+        icon="mdi:arrow-expand-vertical",
+        native_unit_of_measurement="ft",
+    ),
+    value_fn=_density_altitude_station,
+),
+    AeroWeatherSensorSpec(
         description=SensorEntityDescription(
             key="dewpoint",
             name="Dewpoint",
@@ -418,6 +471,8 @@ class AeroWeatherSensor(CoordinatorEntity[AeroWeatherCoordinator], SensorEntity)
             self._attr_native_unit_of_measurement = UnitOfLength.MILES
         elif key == "ceiling":
             self._attr_native_unit_of_measurement = "ft"
+        elif key == "density_altitude":
+            self._attr_native_unit_of_measurement = UnitOfLength.FEET
         elif key == "altimeter":
             self._attr_native_unit_of_measurement = UnitOfPressure.INHG
         elif key in {"temp", "dewpoint"}:
