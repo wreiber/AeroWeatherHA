@@ -207,8 +207,8 @@ def _visibility_sm(metar: dict[str, Any]) -> float | None:
 
 
 def _altim_inhg(metar: dict[str, Any]) -> float | None:
-    # API may provide altim (inHg) or altimHg
-    return _to_float(_first_present(metar, ["altim", "altimHg", "altimeter", "altim_inhg"]))
+    raw = _first_present(metar, ["altim", "altimHg", "altimeter", "altim_inhg", "qnh", "QNH"])
+    return _altimeter_to_inhg(raw)
 
 
 def _temp_c(metar: dict[str, Any]) -> float | None:
