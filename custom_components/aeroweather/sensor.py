@@ -383,7 +383,7 @@ DESCRIPTIONS: list[AeroWeatherSensorSpec] = [
             icon="mdi:cloud",
             native_unit_of_measurement="ft",
         ),
-        value_fn=lambda d, i: (_parse_ceiling_ft(_metar_item(d, i) or {}) if _metar_item(d, i) else None),
+        value_fn=lambda d, i: (_ceil_ft_from_layers(_metar_item(d, i) or {}) if _metar_item(d, i) else None),
     ),
     AeroWeatherSensorSpec(
         description=SensorEntityDescription(
