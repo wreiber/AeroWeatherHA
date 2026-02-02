@@ -248,6 +248,21 @@ def _wx_string(metar: dict[str, Any]) -> str | None:
         return " ".join([str(x) for x in wx if x])
     return str(wx)
 
+def _parse_ceiling_ft(metar: dict[str, Any]) -> float:
+    """Return ceiling in feet AGL. If no ceiling is reported, return 0 (Clear)."""
+    layers = metar.get("clouds")
+    if not layers:
+        return 0.0
+
+    ceilings: list[float] = []
+    for layer in layers:
+        cover = layer.get("cover")
+        base = _to_float(layer.get("base_ft_agl"))
+        if cover in ("BKN", "OVC", "VV") and base is not None:
+            ceilings.append(base)
+
+    return min(ceilings) if ceilings else 0.0
+
 # --- Density altitude support ---
 
 FIELD_ELEV_FT: dict[str, int] = {
