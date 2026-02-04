@@ -13,6 +13,11 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .const import DOMAIN, CONF_ICAOS, CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
 
+from .notams import fetch_notams
+from .notam_helpers import classify_notam
+
+self.data["notams"][icao] = processed_notams
+
 _LOGGER = logging.getLogger(__name__)
 BASE = "https://aviationweather.gov/api/data"
 
